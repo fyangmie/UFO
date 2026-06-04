@@ -2,9 +2,9 @@
 
 GitHub repository: <https://github.com/fyangmie/UFO>
 
-Render deployment entry: <https://render.com/deploy?repo=https://github.com/fyangmie/UFO>
+Hugging Face Space: <https://huggingface.co/spaces/fyangmie/UFO>
 
-Live demo URL: pending Render deployment.
+Live demo URL: <https://huggingface.co/spaces/fyangmie/UFO>
 
 This project demonstrates a clean local deployment workflow for a classroom UFO country classifier. A scikit-learn model predicts the likely sighting country from three inputs:
 
@@ -110,18 +110,31 @@ Open the app at the local URL printed by Streamlit, usually:
 http://localhost:8501
 ```
 
-## Optional Cloud Demo URL
+## Hugging Face Spaces Docker Deployment
 
-GitHub stores the code, but it does not run this FastAPI and Streamlit app by itself. To make a clickable public URL, deploy the repository to a Python web service such as Render.
+GitHub stores the code, but it does not run this FastAPI and Streamlit app by itself. The deployed classroom demo uses Hugging Face Spaces with the Docker SDK.
 
-This repository includes `render.yaml` and `scripts/start_cloud.sh` for a single Render web service. The cloud service starts FastAPI on an internal local port and exposes Streamlit on the public service port.
+This repository includes a `Dockerfile` and `scripts/start_cloud.sh`. The container starts FastAPI on the internal local URL `http://127.0.0.1:8000` and exposes Streamlit on the Hugging Face Spaces public port `7860`.
 
-After pushing to GitHub:
+For the Hugging Face Space:
 
-1. Open Render and choose **New Blueprint**.
-2. Select this GitHub repository.
-3. Deploy the `ufo-local-deployment` service.
-4. Open the Render service URL when the build finishes.
+1. Open <https://huggingface.co/spaces/fyangmie/UFO>.
+2. Set the Space SDK to **Docker**.
+3. Upload or sync this repository's files to the Space.
+4. Wait for the Docker build to finish.
+5. Open the Space URL and run a prediction.
+
+The Docker container uses these defaults:
+
+```text
+PORT=7860
+UFO_BACKEND_PORT=8000
+UFO_BACKEND_URL=http://127.0.0.1:8000
+```
+
+## Optional Render Deployment
+
+The repository also keeps `render.yaml` for Render. If using Render instead of Hugging Face Spaces, deploy from the GitHub repository and use `bash scripts/start_cloud.sh` as the start command.
 
 ## Example API Request
 
