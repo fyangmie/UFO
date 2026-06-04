@@ -4,7 +4,9 @@ GitHub repository: <https://github.com/fyangmie/UFO>
 
 Hugging Face Space: <https://huggingface.co/spaces/fyangmie/UFO>
 
-Live demo URL: <https://huggingface.co/spaces/fyangmie/UFO>
+Live demo URL: <https://fyangmie-ufo.hf.space>
+
+Hugging Face project page: <https://huggingface.co/spaces/fyangmie/UFO>
 
 This project demonstrates a clean local deployment workflow for a classroom UFO country classifier. A scikit-learn model predicts the likely sighting country from three inputs:
 
