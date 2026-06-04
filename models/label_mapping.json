@@ -1,0 +1,21 @@
+{
+  "features": [
+    "Seconds",
+    "Latitude",
+    "Longitude"
+  ],
+  "classes": [
+    "Australia",
+    "Canada",
+    "Germany",
+    "UK",
+    "US"
+  ],
+  "class_id_to_country": {
+    "0": "Australia",
+    "1": "Canada",
+    "2": "Germany",
+    "3": "UK",
+    "4": "US"
+  }
+}
