@@ -1,3 +1,13 @@
+---
+title: UFO Country Demo
+colorFrom: blue
+colorTo: purple
+sdk: gradio
+sdk_version: 6.10.0
+app_file: app.py
+pinned: false
+---
+
 # UFO Local Deployment Project
 
 GitHub repository: <https://github.com/fyangmie/UFO>
@@ -34,7 +44,7 @@ Streamlit frontend
 localhost browser demo
 ```
 
-The Streamlit frontend calls the FastAPI backend over HTTP. Streamlit does not load the model directly.
+The local classroom architecture keeps Streamlit and FastAPI separate. The Hugging Face Space uses a small Gradio `app.py` at the repository root so the public website matches the teacher's example Space structure.
 
 ## Project Structure
 
@@ -44,6 +54,8 @@ The Streamlit frontend calls the FastAPI backend over HTTP. Streamlit does not l
 ├── PRD.md
 ├── AGENTS.md
 ├── requirements.txt
+├── app.py
+├── model_service.py
 ├── data/ufos.csv
 ├── notebooks/notebook.ipynb
 ├── models/ufo-model.pkl
@@ -112,31 +124,36 @@ Open the app at the local URL printed by Streamlit, usually:
 http://localhost:8501
 ```
 
-## Hugging Face Spaces Docker Deployment
+## Hugging Face Spaces Gradio Deployment
 
-GitHub stores the code, but it does not run this FastAPI and Streamlit app by itself. The deployed classroom demo uses Hugging Face Spaces with the Docker SDK.
+GitHub stores the code, but it does not run the app by itself. The public classroom demo uses Hugging Face Spaces with the Gradio SDK, matching the teacher-style examples:
 
-This repository includes a `Dockerfile` and `scripts/start_cloud.sh`. The container starts FastAPI on the internal local URL `http://127.0.0.1:8000` and exposes Streamlit on the Hugging Face Spaces public port `7860`.
+- <https://huggingface.co/spaces/endsieg97/mnist-digit-demo>
+- <https://huggingface.co/spaces/endsieg97/ufo-country-demo>
 
-For the Hugging Face Space:
-
-1. Open <https://huggingface.co/spaces/fyangmie/UFO>.
-2. Set the Space SDK to **Docker**.
-3. Upload or sync this repository's files to the Space.
-4. Wait for the Docker build to finish.
-5. Open the Space URL and run a prediction.
-
-The Docker container uses these defaults:
+The Space entrypoint is:
 
 ```text
-PORT=7860
-UFO_BACKEND_PORT=8000
-UFO_BACKEND_URL=http://127.0.0.1:8000
+app.py
 ```
 
-## Optional Render Deployment
+The Gradio app exposes a callable endpoint:
 
-The repository also keeps `render.yaml` for Render. If using Render instead of Hugging Face Spaces, deploy from the GitHub repository and use `bash scripts/start_cloud.sh` as the start command.
+```text
+/predict_country
+```
+
+For the Hugging Face Space settings:
+
+1. Open <https://huggingface.co/spaces/fyangmie/UFO>.
+2. Set the Space SDK to **Gradio**.
+3. Use `app.py` as the app file.
+4. Upload or sync this repository's files to the Space.
+5. Open the Space URL and run a prediction.
+
+## Optional Docker Deployment
+
+The repository also keeps `Dockerfile`, `render.yaml`, and `scripts/start_cloud.sh` for the earlier FastAPI + Streamlit cloud deployment path. Use the Gradio Space path above when matching the teacher example website structure.
 
 ## Example API Request
 
