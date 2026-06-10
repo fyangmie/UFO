@@ -2,9 +2,8 @@
 title: UFO Country Demo
 colorFrom: blue
 colorTo: purple
-sdk: gradio
-sdk_version: 6.10.0
-app_file: app.py
+sdk: docker
+app_port: 7860
 pinned: false
 ---
 
@@ -44,7 +43,25 @@ Streamlit frontend
 localhost browser demo
 ```
 
-The local classroom architecture keeps Streamlit and FastAPI separate. The Hugging Face Space uses a small Gradio `app.py` at the repository root so the public website matches the teacher's example Space structure.
+The local classroom architecture keeps Streamlit and FastAPI separate.
+
+The Docker deployment keeps the same backend separation while exposing a Gradio page that matches the teacher's example Space style:
+
+```text
+Browser
+   |
+   v
+Gradio frontend on port 7860
+   |
+   | HTTP request
+   v
+FastAPI backend on 127.0.0.1:8000
+   |
+   v
+models/ufo-model.pkl
+```
+
+Only port `7860` is public. FastAPI remains internal to the container, and the Gradio frontend does not load the model directly.
 
 ## Project Structure
 
@@ -54,6 +71,8 @@ The local classroom architecture keeps Streamlit and FastAPI separate. The Huggi
 ├── PRD.md
 ├── AGENTS.md
 ├── requirements.txt
+├── Dockerfile
+├── .dockerignore
 ├── app.py
 ├── model_service.py
 ├── data/ufos.csv
@@ -124,36 +143,72 @@ Open the app at the local URL printed by Streamlit, usually:
 http://localhost:8501
 ```
 
-## Hugging Face Spaces Gradio Deployment
+## Build And Run With Docker
 
-GitHub stores the code, but it does not run the app by itself. The public classroom demo uses Hugging Face Spaces with the Gradio SDK, matching the teacher-style examples:
+Build the image from the repository root:
+
+```bash
+docker build -t ufo-country-demo .
+```
+
+Run the container:
+
+```bash
+docker run --rm -p 7860:7860 --name ufo-country-demo ufo-country-demo
+```
+
+Open:
+
+```text
+http://localhost:7860
+```
+
+The container starts both services:
+
+- FastAPI: internal `http://127.0.0.1:8000`
+- Gradio: public `http://0.0.0.0:7860`
+
+Stop the running container with `Ctrl+C`, or from another terminal:
+
+```bash
+docker stop ufo-country-demo
+```
+
+Inspect logs to demonstrate the Gradio-to-FastAPI HTTP requests:
+
+```bash
+docker logs ufo-country-demo
+```
+
+## Hugging Face Spaces Docker Deployment
+
+GitHub stores the code, but it does not run the app by itself. The public classroom demo uses a Hugging Face Docker Space while retaining a Gradio interface similar to the teacher examples:
 
 - <https://huggingface.co/spaces/endsieg97/mnist-digit-demo>
 - <https://huggingface.co/spaces/endsieg97/ufo-country-demo>
 
-The Space entrypoint is:
+The Space configuration is defined in this README:
 
-```text
-app.py
+```yaml
+sdk: docker
+app_port: 7860
 ```
 
-The Gradio app exposes a callable endpoint:
+Hugging Face builds the root `Dockerfile`, runs `scripts/start_cloud.sh`, exposes port `7860`, and leaves FastAPI reachable only inside the container.
+
+The Gradio interface exposes a callable action named:
 
 ```text
 /predict_country
 ```
 
-For the Hugging Face Space settings:
+Deployment:
 
 1. Open <https://huggingface.co/spaces/fyangmie/UFO>.
-2. Set the Space SDK to **Gradio**.
-3. Use `app.py` as the app file.
-4. Upload or sync this repository's files to the Space.
-5. Open the Space URL and run a prediction.
-
-## Optional Docker Deployment
-
-The repository also keeps `Dockerfile`, `render.yaml`, and `scripts/start_cloud.sh` for the earlier FastAPI + Streamlit cloud deployment path. Use the Gradio Space path above when matching the teacher example website structure.
+2. Confirm the README metadata shows `sdk: docker`.
+3. Push the repository files to the Space.
+4. Wait for the Docker build and health check to pass.
+5. Open <https://fyangmie-ufo.hf.space> and run a prediction.
 
 ## Example API Request
 
@@ -196,18 +251,22 @@ pytest -q
 ## Classroom Demo Script
 
 1. Run `python scripts/train_model.py`.
-2. Start the backend with `uvicorn backend.main:app --host 127.0.0.1 --port 8000`.
-3. Open `http://localhost:8000/docs` and show `/health`.
-4. Send a `/predict` request with `seconds=30`, `latitude=34.05`, `longitude=-118.25`.
-5. Start Streamlit with `streamlit run frontend/streamlit_app.py`.
-6. Load a sample preset and click **Predict Country**.
-7. Show the predicted country, probability table, and raw JSON response.
-8. Explain that the frontend and backend are separate local services.
+2. Build the image with `docker build -t ufo-country-demo .`.
+3. Run it with `docker run --rm -p 7860:7860 --name ufo-country-demo ufo-country-demo`.
+4. Open `http://localhost:7860`.
+5. Load a sample coordinate and click **Predict**.
+6. Show the predicted country, confidence, and probabilities.
+7. Run `docker logs ufo-country-demo` and point out the FastAPI `/health` and `/predict` requests.
+8. Open <https://fyangmie-ufo.hf.space> to demonstrate the same container in the cloud.
+9. Explain that Docker standardizes the Python version, dependencies, model files, startup commands, and ports.
 
 ## Troubleshooting
 
 - If `/health` says the model is not loaded, run `python scripts/train_model.py` from the repository root and restart Uvicorn.
 - If Streamlit says the backend is unavailable, make sure Uvicorn is running on `http://localhost:8000`.
+- If the Docker page says the backend is unavailable, inspect `docker logs ufo-country-demo`; the startup script waits for `/health` before launching Gradio.
+- If port `7860` is already in use, run with another host port, for example `docker run --rm -p 7861:7860 ufo-country-demo`.
+- If Hugging Face still treats the Space as Gradio SDK, confirm the README YAML says `sdk: docker`, then restart the Space.
 - If validation fails, check that `seconds` is 1 to 60, latitude is -90 to 90, and longitude is -180 to 180.
 - If a pickle version error appears, reinstall dependencies and regenerate the model with the training script.
 - If you replace `data/ufos.csv` with the original dataset, keep the required columns: `duration (seconds)`, `country`, `latitude`, and `longitude`.

@@ -1,8 +1,10 @@
 """Hugging Face Spaces Gradio frontend for the UFO country predictor."""
 
+import os
+
 import gradio as gr
 
-from model_service import predict_country
+from model_service import BackendClientError, backend_health, predict_country
 
 
 SAMPLES = [
@@ -14,12 +16,32 @@ SAMPLES = [
 ]
 
 
+def check_backend_status() -> str:
+    """Render backend and model availability without hiding API errors."""
+
+    try:
+        backend_health()
+    except BackendClientError as exc:
+        return f"**Backend status:** unavailable - {exc}"
+    return "**Backend status:** online, model loaded"
+
+
+def call_api(seconds: float, latitude: float, longitude: float):
+    """Convert API client failures into readable Gradio errors."""
+
+    try:
+        return predict_country(seconds, latitude, longitude)
+    except BackendClientError as exc:
+        raise gr.Error(str(exc)) from exc
+
+
 with gr.Blocks(title="UFO Country Demo") as demo:
     gr.Markdown("# UFO Country Predictor")
     gr.Markdown(
-        "Gradio demo for predicting the likely UFO sighting country from "
-        "duration, latitude, and longitude."
+        "Docker-deployed Gradio frontend that calls a FastAPI model backend "
+        "over HTTP."
     )
+    backend_status = gr.Markdown("**Backend status:** checking...")
 
     with gr.Row():
         seconds = gr.Slider(1, 60, value=30, step=1, label="Duration in seconds")
@@ -39,12 +61,17 @@ with gr.Blocks(title="UFO Country Demo") as demo:
     )
 
     gr.Button("Predict").click(
-        predict_country,
+        call_api,
         inputs=[seconds, latitude, longitude],
         outputs=[country, confidence, probabilities],
         api_name="predict_country",
     )
+    demo.load(check_backend_status, outputs=backend_status)
 
 
 if __name__ == "__main__":
-    demo.launch(show_error=True)
+    demo.launch(
+        server_name="0.0.0.0",
+        server_port=int(os.getenv("PORT", "7860")),
+        show_error=True,
+    )
